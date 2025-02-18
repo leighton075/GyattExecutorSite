@@ -7,15 +7,31 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
 </head>
 <body>
+    <div class="topbar">
+        <h1>Gyatt Compiler</h1>
+    </div>
     <div class="container">
-        <div class="input-container">
+        <div class="left-panel">
             <h2>Input Code</h2>
-            <pre id="input-code" contenteditable="true" class="code-input"></pre>
+            <div class="input-wrapper">
+                <div class="line-numbers"></div>
+                <div class="code-container">
+                    <pre id="input-code" contenteditable="true" class="code-input" spellcheck="false"></pre>
+                </div>
+            </div>
+            <button id="execute-button" class="execute-button">Execute Code</button>
         </div>
-        <div class="output-container">
-            <h2>Output</h2>
-            <pre id="output"></pre>
+        <div class="right-panel">
+            <div class="output-container">
+                <h2>Output</h2>
+                <pre id="output" class="code-output"></pre>
+            </div>
+            <div class="console-container">
+                <h2>Console</h2>
+                <pre id="console" class="code-console"></pre>
+            </div>
         </div>
     </div>
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
 </body>
 </html>

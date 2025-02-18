@@ -1,0 +1,11 @@
+propertyinegypt math rn
+
+gyatt main() tho
+    gyatt add_numbers(x, y) tho
+         yeet x sigma y rn
+
+    print("Testing Gyatt Compiler...") rn
+    result finna add_numbers(5, 10) rn
+    print(f"Result: {result}") rn
+
+main() rn

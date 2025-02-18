@@ -1,16 +1,16 @@
 from flask import Flask, render_template, request, jsonify
 import re
-import tokenize
 from io import StringIO
-import uwuify
-import untokenize
+import sys
+from contextlib import redirect_stdout
 
 app = Flask(__name__)
 
-gyatt_slang = {
+# Dictionary mapping Gyatt slang to Python keywords and operators
+GYATT_SLANG = {
     "rizz": "None",
-    "cap": "False",  
-    "nocap": "True",  
+    "cap": "False",
+    "nocap": "True",
     "btw": "and",
     "like": "as",
     "skibidi": "assert",
@@ -40,10 +40,45 @@ gyatt_slang = {
     "nerd": "math",
     "finna": "=",
     "rn": "",
-    "tho": "\abcdefgh:",  
+    "tho": ":",
     "sigma": "+",
-    "times": "range",
+    "times": "range"
 }
+
+def translate_gyatt_to_python(gyatt_code):
+    """Translate Gyatt code to Python code."""
+    python_code = gyatt_code
+    
+    # Replace multi-character operators first
+    python_code = python_code.replace("aint be", "!=")
+    
+    # Replace all other Gyatt terms
+    for slang, replacement in GYATT_SLANG.items():
+        # Use word boundaries to avoid partial matches
+        pattern = r'\b' + re.escape(slang) + r'\b'
+        python_code = re.sub(pattern, replacement, python_code)
+    
+    return python_code
+
+def execute_python_code(python_code):
+    """Execute Python code and capture output."""
+    output = StringIO()
+    error = None
+    
+    try:
+        # Redirect stdout to capture print statements
+        with redirect_stdout(output):
+            # Create a new dictionary for local variables
+            local_dict = {}
+            # Execute the code in a restricted environment
+            exec(python_code, {"__builtins__": __builtins__}, local_dict)
+        
+        # Get the captured output
+        execution_output = output.getvalue()
+        return execution_output if execution_output else "Code executed successfully (no output)"
+    except Exception as e:
+        error = f"Error: {str(e)}"
+        return error
 
 @app.route('/')
 def home():
@@ -51,41 +86,37 @@ def home():
 
 @app.route('/execute', methods=['POST'])
 def execute_gyatt():
-    data = request.get_json()
-    gyatt_code = data.get('code', '')
-
-    if not gyatt_code:
-        return jsonify({"error": "No code provided"}), 400
-
     try:
-        output = execute(gyatt_code)
-        return jsonify({"output": output})
-
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
-
-def execute(gyatt_code):
-    # Replace Gyatt slang with Python code
-    gyatt_code = gyatt_code.replace("aint be", "!=")
-    gyatt_code = gyatt_code.replace("skibidi?", "skibidi")
+        data = request.get_json()
+        gyatt_code = data.get('code', '').strip()
+        check_only = data.get('check_only', False)
+        
+        if not gyatt_code:
+            return jsonify({"error": "No code provided"}), 400
+        
+        # Translate Gyatt code to Python
+        try:
+            python_code = translate_gyatt_to_python(gyatt_code)
+        except Exception as e:
+            return jsonify({"error": f"Translation error: {str(e)}"}), 400
+            
+        # If we're just checking for errors, try to compile the code
+        if check_only:
+            try:
+                compile(python_code, '<string>', 'exec')
+                return jsonify({"status": "valid"})
+            except Exception as e:
+                return jsonify({"error": str(e)}), 400
+        
+        # Otherwise execute the code
+        output = execute_python_code(python_code)
+        return jsonify({
+            "output": output,
+            "python_code": python_code
+        })
     
-    tokens = list(tokenize.generate_tokens(StringIO(gyatt_code).readline))
-    python_code = ""
-
-    for i, token in enumerate(tokens):
-        for slang, replacement in gyatt_slang.items():
-            if token.string == slang:
-                tokens[i] = (token[0], replacement, token[2], token[3], token[4])
-
-    python_code = untokenize.untokenize(tokens)
-    python_code = python_code.replace(" \abcdefgh:", ":")  # Handle non-code replacements
-
-    try:
-        # Execute the Python code and capture the output
-        exec(python_code)
-        return "Executed Successfully"
     except Exception as e:
-        return str(e)
+        return jsonify({"error": f"Server error: {str(e)}"}), 500
 
 if __name__ == '__main__':
     app.run(debug=True)
