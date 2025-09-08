@@ -5,8 +5,8 @@
 
 1. **Clone the repository:**
 	```sh
-	git clone https://github.com/leighton075/gyattcompilersite.git
-	cd gyattcompilersite
+	git clone https://github.com/leighton075/GyattExecutorSite.git
+	cd GyattExecutorSite
 	```
 
 2. **Install Python (if not already installed):**
