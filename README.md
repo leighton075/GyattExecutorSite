@@ -50,4 +50,4 @@ gyattcompilersite/
   ```
 
 ---
-For any issues, please open an issue on GitHub.
+Should be used together with the [Gyatt](https://github.com/pokeshah/Gyatt) programming language
